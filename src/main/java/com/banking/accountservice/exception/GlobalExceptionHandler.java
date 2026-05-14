@@ -15,12 +15,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccountNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleAccountNotFound(AccountNotFoundException ex) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.NOT_FOUND.value());
-        error.put("error", "Not Found");
-        error.put("message", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return buildError(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage());
+    }
+
+    @ExceptionHandler(InsufficientFundsException.class)
+    public ResponseEntity<Map<String, Object>> handleInsufficientFunds(InsufficientFundsException ex) {
+        return buildError(HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient Funds", ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidAccountOperationException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidOperation(InvalidAccountOperationException ex) {
+        return buildError(HttpStatus.CONFLICT, "Invalid Operation", ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -36,5 +41,14 @@ public class GlobalExceptionHandler {
         error.put("fields", fieldErrors);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    private ResponseEntity<Map<String, Object>> buildError(HttpStatus status, String error, String message) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", status.value());
+        body.put("error", error);
+        body.put("message", message);
+        return ResponseEntity.status(status).body(body);
     }
 }
